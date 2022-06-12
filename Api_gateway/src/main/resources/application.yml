@@ -1,0 +1,53 @@
+# lb = loadBalance
+
+
+server:
+  port: 8990
+
+eureka:
+  instance:
+    hostname: localhost
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/users/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: user-service
+                fallbackUri: forward:/userServiceFallback
+        - id: department-service
+          uri: lb://department-service
+          predicates:
+            - Path=/departments/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: department-service
+                fallbackUri: forward:/departmentServiceFallback
+  main:
+    web-application-type: reactive
+
+hystrix:
+  command:
+    fallbackCmd:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 5000
+            
+management:
+  endpoints:
+    web:
+      exposure:
+        include: hystrix.stream
+        
+        
+         
